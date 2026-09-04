@@ -28,6 +28,8 @@ import pandas as pd
 # ── ML: use remote microservice if ML_SERVICE_URL is set, else load locally ──
 ML_SERVICE_URL = os.environ.get("ML_SERVICE_URL", "").rstrip("/")
 
+print(f"[api] ML_SERVICE_URL={'SET -> ' + ML_SERVICE_URL if ML_SERVICE_URL else 'NOT SET — loading model locally'}")
+
 if ML_SERVICE_URL:
     # Thin proxy — forwards predict calls to the ML service
     print(f"[api] ML_SERVICE_URL={ML_SERVICE_URL} — using remote ML service")

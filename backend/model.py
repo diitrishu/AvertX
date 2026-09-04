@@ -38,9 +38,13 @@ _onnx_dir = os.path.join(ARTIFACTS_DIR, "onnx_encoder")
 _onnx_model_file = os.path.join(_onnx_dir, "model.onnx")
 
 if os.path.exists(_onnx_model_file):
-    from backend.onnx_encoder import OnnxSentenceEncoder
-    encoder = OnnxSentenceEncoder(_onnx_dir)
-    print("[model] Using ONNX encoder (low-memory mode)")
+    try:
+        from backend.onnx_encoder import OnnxSentenceEncoder
+        encoder = OnnxSentenceEncoder(_onnx_dir)
+        print("[model] Using ONNX encoder (low-memory mode)")
+    except ImportError:
+        print("[model] onnxruntime not installed — falling back to SentenceTransformer")
+        _onnx_model_file = None  # trigger fallback below
 else:
     # Fallback: SentenceTransformer (requires torch, ~300 MB)
     _encoder_path = os.path.join(ARTIFACTS_DIR, "embedding_model_ref.joblib")
