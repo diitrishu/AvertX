@@ -1,0 +1,47 @@
+{
+  "registry_version": "1.0.0",
+  "generated_at": "2026-09-04",
+  "note": "Catalog of every trained artifact in model_artifacts/. This is a documentation/manifest layer only -- it does NOT move or rename any file backend/model.py actually loads, so it introduces zero runtime risk (rule 9: never silently change existing behavior). A physical reorg into models/{baseline_minilm,safetybert,best_model}/ is a valid follow-up but must be done together with updating backend/model.py's ARTIFACTS_DIR/filenames in the same change, not separately -- see README.md in this folder.",
+  "models": {
+    "sif_classifier": {
+      "slot": "baseline_minilm",
+      "file": "model_artifacts/sif_classifier.joblib",
+      "status": "in_production",
+      "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "classifier_type": "LogisticRegression",
+      "trained_by": "train_model.py",
+      "benchmarked_in": "data/benchmark_results.json / data/benchmark_results.md (Phase 11)",
+      "benchmark_summary": "test precision 0.352 / recall 1.0 / f1 0.5208 / pr_auc 0.494 at val-selected threshold 0.13; base rate 0.347. See MODEL_COMPARISON.md.",
+      "decision_authority": "Phase 12's sif_output_contract.py wraps this classifier's raw probability -- the classifier itself never returns a label directly to the API.",
+      "consumed_by": "backend/model.py (predict()) via backend/sif_output_contract.py::classify_sif"
+    },
+    "safetybert": {
+      "slot": "safetybert",
+      "file": null,
+      "status": "not_populated -- deliberately empty",
+      "reason": "Phase 11 found no qualifying SafetyBERT-family checkpoint (see benchmark_results.json's skip_reason, independently verified against both candidate HF model pages). This slot stays empty rather than being filled with a substitute model under a misleading name -- rule 1/2 (never fabricate data / sources) extends to never fabricating a model's identity."
+    },
+    "rule_classifier_v1": {
+      "slot": "n/a -- currently in production, unversioned in metadata",
+      "file": "model_artifacts/rule_classifier.joblib",
+      "status": "in_production",
+      "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "classifier_type": "LogisticRegression",
+      "trained_by": "train_model.py (same run as sif_classifier)",
+      "benchmarked_in": "NOT independently benchmarked against data/splits/test.csv -- no eval report exists for this specific artifact.",
+      "consumed_by": "backend/model.py (predict()) via backend/rule_output_contract.py::classify_rule -- this is the file actually loaded at runtime today."
+    },
+    "rule_classifier_v2": {
+      "slot": "candidate -- not yet promoted to production",
+      "file": "model_artifacts/rule_classifier_v2.joblib",
+      "status": "trained_and_evaluated_but_not_swapped_in",
+      "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "classifier_type": "LogisticRegression (multinomial, class_weight=balanced)",
+      "trained_by": "train_rule_classifier.py (Phase 13)",
+      "benchmarked_in": "data/rule_classifier_eval.md / model_artifacts/rule_metadata_v2.json",
+      "benchmark_summary": "accuracy 0.5417 on a 24-row test set; 4 of 9 rule classes have ZERO test examples (their metrics are explicitly flagged as not meaningful); 91.67% of test predictions trigger NEEDS_REVIEW under the contract thresholds. 92% of its 450-row training set is synthetic.",
+      "decision_authority": "Rule 15 requires benchmarking BEFORE replacing a production model. v2 has its own eval, but there is no apples-to-apples comparison against rule_classifier_v1 on the same test set, and v1 has no eval report at all to compare against. That comparison does not exist yet, so v2 has NOT been swapped in -- this was an explicit, documented decision by whoever wrote train_rule_classifier.py (see its module docstring: \"left untouched... until Phase 14 integration is approved\"), reaffirmed here rather than overridden.",
+      "recommendation": "A human should decide whether v1's undocumented performance or v2's documented-but-weak performance is the better production choice, or whether neither is trustworthy enough and both should be treated as NEEDS_REVIEW-heavy until more labeled rule data exists. This is a rule-10 judgment call, not something this session should decide unilaterally."
+    }
+  }
+}

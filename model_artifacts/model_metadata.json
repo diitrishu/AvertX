@@ -1,0 +1,42 @@
+{
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dim": 384,
+  "sif_threshold": 0.393216450875414,
+  "sif_classes": [
+    "No",
+    "Yes"
+  ],
+  "rule_classes": [
+    "Bypassing Safety Controls",
+    "Confined Space",
+    "Driving",
+    "Energy Isolation",
+    "Hot Work",
+    "Line of Fire",
+    "Safe Mechanical Lifting",
+    "Work Authorisation",
+    "Working at Height"
+  ],
+  "rule_severity": {
+    "Energy Isolation": 1.0,
+    "Confined Space": 1.0,
+    "Hot Work": 1.0,
+    "Line of Fire": 1.0,
+    "Working at Height": 0.85,
+    "Safe Mechanical Lifting": 0.85,
+    "Work Authorisation": 0.7,
+    "Driving": 0.7,
+    "Bypassing Safety Controls": 0.7
+  },
+  "risk_score_weights": {
+    "confidence": 0.6,
+    "recurrence": 0.25,
+    "rule_severity": 0.15
+  },
+  "training_rows_total": 1325,
+  "training_rows_sif": 1060,
+  "training_rows_rule": 194,
+  "test_size": 0.2,
+  "random_state": 42,
+  "device": "cpu"
+}

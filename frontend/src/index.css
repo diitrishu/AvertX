@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+html, body, #root {
+  height: 100%;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  background-color: #050608;
+  color: #F1F5F9;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34,211,238,0.25) transparent;
+}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(34,211,238,0.25); border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.45); }
+
+/* Command-center backdrop: faint grid, evokes the "map/tracking" feel of
+   a live ops console without needing an actual map. Applied to the main
+   content area only — panels sit on top of it. */
+.command-grid {
+  background-image:
+    linear-gradient(rgba(34,211,238,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,0.05) 1px, transparent 1px),
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(34,211,238,0.10), transparent);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
+}
+
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ── Motion ────────────────────────────────────────────────────────
+   Calm, subtle entrance animation — panels arrive instead of popping in.
+   Used sparingly (per-panel, not per-row) so it reads as polish, not noise. */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.fade-in-delay-1 { animation: fadeSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+.fade-in-delay-2 { animation: fadeSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.pulse-glow { animation: pulseGlow 2.2s ease-in-out infinite; }
+
+@keyframes dashOffset {
+  from { stroke-dashoffset: var(--gauge-full); }
+  to   { stroke-dashoffset: var(--gauge-value); }
+}
+.gauge-arc { animation: dashOffset 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }

@@ -1,0 +1,49 @@
+{
+  "model_name": "rule_classifier_lr_minilm",
+  "model_version": "1.0.0",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "embedding_dim": 384,
+  "classifier_type": "LogisticRegression",
+  "multi_class": "multinomial",
+  "class_weight": "balanced",
+  "C": 1.0,
+  "solver": "lbfgs",
+  "max_iter": 1000,
+  "random_state": 42,
+  "rule_classes": [
+    "Bypassing Safety Controls",
+    "Confined Space",
+    "Driving",
+    "Energy Isolation",
+    "Hot Work",
+    "Line of Fire",
+    "Safe Mechanical Lifting",
+    "Work Authorisation",
+    "Working at Height"
+  ],
+  "n_train_rows": 450,
+  "n_test_rows": 24,
+  "training_class_counts": {
+    "Bypassing Safety Controls": 30,
+    "Confined Space": 44,
+    "Driving": 27,
+    "Energy Isolation": 90,
+    "Hot Work": 55,
+    "Line of Fire": 77,
+    "Safe Mechanical Lifting": 43,
+    "Work Authorisation": 33,
+    "Working at Height": 51
+  },
+  "test_class_counts": {
+    "Bypassing Safety Controls": 1,
+    "Driving": 5,
+    "Energy Isolation": 7,
+    "Line of Fire": 8,
+    "Working at Height": 3
+  },
+  "overall_accuracy_on_test": 0.5417,
+  "needs_review_fraction_on_test": 0.9167,
+  "confidence_threshold": 0.5,
+  "ambiguity_margin": 0.15,
+  "trained_at": "2026-09-04T10:51:08Z"
+}

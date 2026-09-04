@@ -1,0 +1,10 @@
+rule_id,rule_name,description,hazard_examples,barrier_examples
+bypassing_safety_controls,Bypassing Safety Controls,IOGP Life-Saving Rule: Bypassing Safety Controls,Disabled safety interlock; Overridden alarm; Removed machine guard,Interlock system; Safety guard; Alarm system; Permit conditions
+confined_space,Confined Space,IOGP Life-Saving Rule: Confined Space,Toxic atmosphere; Oxygen-deficient atmosphere; Engulfment; Entrapment,Gas testing; Confined space entry permit; Continuous atmosphere monitoring; Rescue plan/standby
+driving,Driving,IOGP Life-Saving Rule: Driving,Vehicle collision; Rollover; Pedestrian strike,Seatbelt use; Speed compliance; Journey management plan; Fatigue management
+energy_isolation,Energy Isolation,IOGP Life-Saving Rule: Energy Isolation,Unexpected energy release; Electrical shock; Stored/residual energy,Lockout/Tagout (LOTO); Isolation verification; Zero-energy check; Isolation certificate
+hot_work,Hot Work,IOGP Life-Saving Rule: Hot Work,Ignition of flammable material; Fire; Explosion,Hot work permit; Fire watch; Gas testing (flammable atmosphere); Fire extinguishing equipment on site
+line_of_fire,Line of Fire,IOGP Life-Saving Rule: Line of Fire,Struck by falling/moving object; Suspended load; Pressure release,Barricading/exclusion zone; Suspended load control; Positioning awareness; Signage
+safe_mechanical_lifting,Safe Mechanical Lifting,IOGP Life-Saving Rule: Safe Mechanical Lifting,Load drop; Crane instability; Rigging failure,Lift plan; Rigging inspection; Competent rigger/banksman; Load chart compliance
+work_authorisation,Work Authorisation,IOGP Life-Saving Rule: Work Authorisation,Unauthorized/uncontrolled work start; Missing risk assessment,Permit to Work (PTW); Risk assessment / JSA; Supervisory authorization
+working_at_height,Working at Height,IOGP Life-Saving Rule: Working at Height,Fall from height; Dropped object,Fall protection/harness; Guardrails; Scaffold inspection tag; Anchor point verification

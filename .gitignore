@@ -1,0 +1,65 @@
+# ── Large / regeneratable data pipeline outputs ─────────────────────────
+# See data/README.md and DATA_SOURCES.md for how to regenerate these from
+# scratch (download_datasets.py -> build_raw.py -> build_master_schema.py
+# -> build_cleaned.py -> extract_structured_fields.py). Total size of the
+# full pipeline output is multiple GB -- not appropriate for git.
+data/raw/*
+!data/raw/MANIFEST.csv
+!data/raw/bsee/
+data/processed/master_raw.csv
+data/processed/safety_master.csv
+data/processed/safety_master_extracted.csv
+data/phmsa/
+data/kaggle/
+data/huggingface/
+
+# Loose top-level raw source files (duplicates of data/raw/* -- see
+# DATA_SOURCES.md). Not read by any code path needed to run the app.
+/OSHA_Incident-Reports_Jan-2015_Dec-22.csv
+/incident_gas_transmission_gathering_jan2010_present.txt
+/OSHA HSE DATA_ALL ABSTRACTS 15-17_FINAL.csv
+/database.csv
+/IHMStefanini_industrial_safety_and_health_database.csv
+/IHMStefanini_industrial_safety_and_health_database_with_accidents_description.csv
+/Gas Transmission and Gathering Incident PHMSA F7100.2 Rev 9-2023 Data fields.pdf
+/ui_inspiration/
+/Accidents_Storyline_example.png
+/.freebuff
+
+# ── Runtime state -- regenerated on first run, must not ship pre-seeded ──
+sif_database.db
+*.log
+
+# ── Large trained artifact that's just a re-downloadable public model ──
+# (regenerate with: python scripts/setup_embedding_model.py)
+model_artifacts/embedding_model_ref.joblib
+
+# ── Standard ignores ─────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.env
+.env.*
+!.env.example

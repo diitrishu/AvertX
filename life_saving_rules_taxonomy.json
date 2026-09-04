@@ -1,0 +1,62 @@
+{
+  "problem_statement": "SIH26165 - AI/NLP for SIF Precursor Detection (Oil India Limited)",
+  "note": "9 IOGP Life-Saving Rules used as the fixed label set for the rule-classifier, plus the barriers/hazards typically associated with each. Use this as the canonical taxonomy so labeling, model output, and dashboard categories all stay consistent.",
+  "life_saving_rules": [
+    {
+      "rule": "Bypassing Safety Controls",
+      "barriers": ["Interlock system", "Safety guard", "Alarm system", "Permit conditions"],
+      "typical_hazards": ["Disabled safety interlock", "Overridden alarm", "Removed machine guard"]
+    },
+    {
+      "rule": "Confined Space",
+      "barriers": ["Gas testing", "Confined space entry permit", "Continuous atmosphere monitoring", "Rescue plan/standby"],
+      "typical_hazards": ["Toxic atmosphere", "Oxygen-deficient atmosphere", "Engulfment", "Entrapment"]
+    },
+    {
+      "rule": "Driving",
+      "barriers": ["Seatbelt use", "Speed compliance", "Journey management plan", "Fatigue management"],
+      "typical_hazards": ["Vehicle collision", "Rollover", "Pedestrian strike"]
+    },
+    {
+      "rule": "Energy Isolation",
+      "barriers": ["Lockout/Tagout (LOTO)", "Isolation verification", "Zero-energy check", "Isolation certificate"],
+      "typical_hazards": ["Unexpected energy release", "Electrical shock", "Stored/residual energy"]
+    },
+    {
+      "rule": "Hot Work",
+      "barriers": ["Hot work permit", "Fire watch", "Gas testing (flammable atmosphere)", "Fire extinguishing equipment on site"],
+      "typical_hazards": ["Ignition of flammable material", "Fire", "Explosion"]
+    },
+    {
+      "rule": "Line of Fire",
+      "barriers": ["Barricading/exclusion zone", "Suspended load control", "Positioning awareness", "Signage"],
+      "typical_hazards": ["Struck by falling/moving object", "Suspended load", "Pressure release"]
+    },
+    {
+      "rule": "Safe Mechanical Lifting",
+      "barriers": ["Lift plan", "Rigging inspection", "Competent rigger/banksman", "Load chart compliance"],
+      "typical_hazards": ["Load drop", "Crane instability", "Rigging failure"]
+    },
+    {
+      "rule": "Work Authorisation",
+      "barriers": ["Permit to Work (PTW)", "Risk assessment / JSA", "Supervisory authorization"],
+      "typical_hazards": ["Unauthorized/uncontrolled work start", "Missing risk assessment"]
+    },
+    {
+      "rule": "Working at Height",
+      "barriers": ["Fall protection/harness", "Guardrails", "Scaffold inspection tag", "Anchor point verification"],
+      "typical_hazards": ["Fall from height", "Dropped object"]
+    }
+  ],
+  "activities": [
+    "Maintenance", "Drilling Operations", "Lifting Operations", "Hot Work",
+    "Confined Space Entry", "Transportation", "Working at Height",
+    "Electrical Work", "Pipeline Operations", "Housekeeping",
+    "Scaffolding", "Excavation", "Production Operations", "Vehicle Movement"
+  ],
+  "report_types": ["UA (Unsafe Act)", "UC (Unsafe Condition)", "Near Miss", "Incident"],
+  "sites": [
+    "Site A - Duliajan", "Site B - Moran", "Site C - Kumchai",
+    "Site D - Jorajan", "Site E - Barekuri Pipeline"
+  ]
+}
