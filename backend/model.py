@@ -32,7 +32,13 @@ else:
     _model_id = _meta.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
     print(f"[model] embedding_model_ref.joblib not found — downloading {_model_id} from HuggingFace ...")
     encoder = SentenceTransformer(_model_id)
-    print("[model] Encoder downloaded OK")
+    # Save back to disk so subsequent cold starts within the same deploy skip the download
+    try:
+        joblib.dump(encoder, _encoder_path)
+        print(f"[model] Encoder cached to {_encoder_path} for faster restarts")
+    except Exception as _e:
+        print(f"[model] Could not cache encoder to disk ({_e}) — will re-download on next cold start")
+    print("[model] Encoder ready")
 
 clf_sif  = joblib.load(os.path.join(ARTIFACTS_DIR, "sif_classifier.joblib"))
 clf_rule = joblib.load(os.path.join(ARTIFACTS_DIR, "rule_classifier.joblib"))
