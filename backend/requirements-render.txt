@@ -1,15 +1,15 @@
-# Main backend (Render free tier) -- NO ML deps, model lives in ml_service/
-# This keeps RAM under 200 MB so the free 512 MB limit is never hit.
+# Main backend -- stripped to absolute minimum for 512 MB free tier.
+# NO ML, NO torch, NO scikit-learn, NO scipy.
+# All prediction calls go to the ML microservice via ML_SERVICE_URL.
 fastapi==0.115.0
 uvicorn==0.32.0
-pandas
-scikit-learn
-joblib
-pdfplumber
-pytesseract
-pdf2image
 python-multipart
 pyjwt
 bcrypt
 psycopg2-binary
 python-dotenv
+pandas
+joblib
+pdfplumber
+pdf2image
+pytesseract
