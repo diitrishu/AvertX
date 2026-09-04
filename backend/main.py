@@ -69,10 +69,17 @@ def _is_critical(result: dict) -> bool:
 @app.on_event("startup")
 def startup():
     init_db()
-    conn = get_db()
-    df = pd.read_csv(os.path.join(os.path.dirname(__file__), "..", "oil_safety_reports_merged.csv"))
-    build_recurrence_table(df)
-    conn.close()
+    # Build recurrence table from CSV if available (local dev).
+    # On Render the CSV may not be present -- skip gracefully since
+    # the recurrence table is a nice-to-have signal, not required for
+    # the core SIF classifier to work.
+    csv_path = os.path.join(os.path.dirname(__file__), "..", "oil_safety_reports_merged.csv")
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        build_recurrence_table(df)
+    else:
+        print("[api] oil_safety_reports_merged.csv not found — skipping recurrence table (Render deploy)")
+    print("[api] Startup complete.")
     print("[api] Startup complete.")
 
 # ═══════════════════════════════════════════════════════════════════

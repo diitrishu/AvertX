@@ -6,12 +6,22 @@ On first run (e.g. Render deploy), if embedding_model_ref.joblib is absent,
 the encoder is downloaded directly from HuggingFace and cached via
 sentence-transformers' own cache (~/.cache/torch/sentence_transformers).
 This means the 87 MB joblib file does not need to be committed to git.
+
+Memory budget (free-tier 512 MB):
+  - torch CPU-only mode is forced via env var before any import
+  - LIME explainer is lazy-loaded on first prediction request
+  - lime import is deferred to avoid loading scipy at startup
 """
 
 import os, json
+# Force CPU-only torch BEFORE sentence-transformers imports torch.
+# This prevents torch from allocating CUDA context memory (~100 MB) even
+# on a CPU-only machine, and keeps the resident set well under 512 MB.
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 import numpy as np
 import joblib
-from lime.lime_text import LimeTextExplainer
 
 from backend.sif_output_contract import classify_sif
 from backend.rule_output_contract import classify_rule, NEEDS_REVIEW as RULE_NEEDS_REVIEW
@@ -56,21 +66,28 @@ with open(os.path.join(ARTIFACTS_DIR, "model_metadata.json")) as f:
 SIF_THRESHOLD = metadata["sif_threshold"]
 RULE_SEVERITY = metadata["rule_severity"]
 
-# ── LIME explainer ───────────────────────────────────────────────────
+# ── LIME explainer (lazy — created on first prediction to save startup RAM) ──
+_lime_explainer = None
+
+def _get_lime_explainer():
+    global _lime_explainer
+    if _lime_explainer is None:
+        from lime.lime_text import LimeTextExplainer
+        _lime_explainer = LimeTextExplainer(
+            class_names=["No SIF", "Yes SIF"],
+            random_state=42,
+            split_expression=r"\W+",
+        )
+    return _lime_explainer
+
 def _lime_predict_proba(texts):
     embs = encoder.encode(list(texts), convert_to_numpy=True)
     return clf_sif.predict_proba(embs)
 
-lime_explainer = LimeTextExplainer(
-    class_names=["No SIF", "Yes SIF"],
-    random_state=42,
-    split_expression=r"\W+",
-)
-
 def explain_prediction(report_text: str, num_samples: int = 200,
                        num_features: int = 6) -> list:
     """Returns [(word, weight), ...] sorted by |weight| desc."""
-    exp = lime_explainer.explain_instance(
+    exp = _get_lime_explainer().explain_instance(
         report_text, _lime_predict_proba,
         num_samples=num_samples, num_features=num_features, labels=(1,),
     )
