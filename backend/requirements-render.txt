@@ -1,0 +1,18 @@
+# Render production requirements -- torch excluded to stay under 512 MB RAM
+# onnxruntime provides the same embeddings without PyTorch
+fastapi==0.115.0
+uvicorn==0.32.0
+pandas
+scikit-learn
+onnxruntime
+transformers
+joblib
+lime
+pdfplumber
+pytesseract
+pdf2image
+python-multipart
+pyjwt
+bcrypt
+psycopg2-binary
+python-dotenv

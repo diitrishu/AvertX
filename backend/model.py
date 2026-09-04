@@ -28,27 +28,38 @@ from backend.rule_output_contract import classify_rule, NEEDS_REVIEW as RULE_NEE
 
 ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "model_artifacts")
 
-# ── Load everything at import time (module-level singletons) ──────────
+# ── Load encoder ──────────────────────────────────────────────────────
+# Prefer the ONNX encoder (no PyTorch, ~50 MB RSS) over SentenceTransformer
+# (~300 MB RSS with torch).  Falls back to SentenceTransformer if the ONNX
+# export is absent (local dev without running export_encoder_onnx.py).
 print("[model] Loading artifacts from", os.path.abspath(ARTIFACTS_DIR))
 
-_encoder_path = os.path.join(ARTIFACTS_DIR, "embedding_model_ref.joblib")
-if os.path.exists(_encoder_path):
-    encoder = joblib.load(_encoder_path)
-    print("[model] Loaded encoder from joblib cache")
+_onnx_dir = os.path.join(ARTIFACTS_DIR, "onnx_encoder")
+_onnx_model_file = os.path.join(_onnx_dir, "model.onnx")
+
+if os.path.exists(_onnx_model_file):
+    from backend.onnx_encoder import OnnxSentenceEncoder
+    encoder = OnnxSentenceEncoder(_onnx_dir)
+    print("[model] Using ONNX encoder (low-memory mode)")
 else:
-    from sentence_transformers import SentenceTransformer
-    with open(os.path.join(ARTIFACTS_DIR, "model_metadata.json")) as _f:
-        _meta = json.load(_f)
-    _model_id = _meta.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
-    print(f"[model] embedding_model_ref.joblib not found — downloading {_model_id} from HuggingFace ...")
-    encoder = SentenceTransformer(_model_id)
-    # Save back to disk so subsequent cold starts within the same deploy skip the download
-    try:
-        joblib.dump(encoder, _encoder_path)
-        print(f"[model] Encoder cached to {_encoder_path} for faster restarts")
-    except Exception as _e:
-        print(f"[model] Could not cache encoder to disk ({_e}) — will re-download on next cold start")
-    print("[model] Encoder ready")
+    # Fallback: SentenceTransformer (requires torch, ~300 MB)
+    _encoder_path = os.path.join(ARTIFACTS_DIR, "embedding_model_ref.joblib")
+    if os.path.exists(_encoder_path):
+        encoder = joblib.load(_encoder_path)
+        print("[model] Loaded SentenceTransformer encoder from joblib cache")
+    else:
+        from sentence_transformers import SentenceTransformer
+        with open(os.path.join(ARTIFACTS_DIR, "model_metadata.json")) as _f:
+            _meta = json.load(_f)
+        _model_id = _meta.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
+        print(f"[model] Downloading {_model_id} from HuggingFace (no ONNX export found) ...")
+        encoder = SentenceTransformer(_model_id)
+        try:
+            joblib.dump(encoder, _encoder_path)
+            print(f"[model] Encoder cached to {_encoder_path}")
+        except Exception as _e:
+            print(f"[model] Could not cache encoder ({_e})")
+    print("[model] Using SentenceTransformer encoder")
 
 clf_sif  = joblib.load(os.path.join(ARTIFACTS_DIR, "sif_classifier.joblib"))
 clf_rule = joblib.load(os.path.join(ARTIFACTS_DIR, "rule_classifier.joblib"))

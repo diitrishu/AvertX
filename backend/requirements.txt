@@ -2,6 +2,10 @@ fastapi==0.115.0
 uvicorn==0.32.0
 pandas
 scikit-learn
+# onnxruntime replaces torch + sentence-transformers at runtime (~50 MB vs ~300 MB)
+# sentence-transformers is kept as a fallback for local dev without the ONNX export
+onnxruntime
+transformers
 sentence-transformers
 torch
 joblib
