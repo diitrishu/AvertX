@@ -5,7 +5,10 @@ import {
 } from "recharts";
 
 // ─── API base ───────────────────────────────────────────────────────
-const API = "/api";
+// In production (Render static site) VITE_API_URL is set to the backend URL
+// e.g. https://avertx.onrender.com  — the /api prefix is NOT used there.
+// In local dev, Vite proxies /api -> localhost:8000 (see vite.config.ts).
+const API = (import.meta.env.VITE_API_URL ?? "") + (import.meta.env.VITE_API_URL ? "" : "/api");
 
 // ─── Auth ───────────────────────────────────────────────────────────
 // Real accounts, not a demo toggle: JWT issued by POST /auth/login or
