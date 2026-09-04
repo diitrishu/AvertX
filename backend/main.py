@@ -14,6 +14,9 @@ import os, io, json
 from datetime import datetime
 from typing import Optional
 
+from dotenv import load_dotenv
+load_dotenv()  # loads .env before any module reads SUPABASE_DB_URL
+
 from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd

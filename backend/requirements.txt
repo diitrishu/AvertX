@@ -12,3 +12,5 @@ pdf2image
 python-multipart
 pyjwt
 bcrypt
+psycopg2-binary
+python-dotenv
