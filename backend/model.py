@@ -1,6 +1,11 @@
 """
 Model loading, prediction, LIME explanation, and risk-score logic.
 Loads saved artifacts from model_artifacts/ -- no retraining.
+
+On first run (e.g. Render deploy), if embedding_model_ref.joblib is absent,
+the encoder is downloaded directly from HuggingFace and cached via
+sentence-transformers' own cache (~/.cache/torch/sentence_transformers).
+This means the 87 MB joblib file does not need to be committed to git.
 """
 
 import os, json
@@ -16,7 +21,19 @@ ARTIFACTS_DIR = os.path.join(os.path.dirname(__file__), "..", "model_artifacts")
 # ── Load everything at import time (module-level singletons) ──────────
 print("[model] Loading artifacts from", os.path.abspath(ARTIFACTS_DIR))
 
-encoder  = joblib.load(os.path.join(ARTIFACTS_DIR, "embedding_model_ref.joblib"))
+_encoder_path = os.path.join(ARTIFACTS_DIR, "embedding_model_ref.joblib")
+if os.path.exists(_encoder_path):
+    encoder = joblib.load(_encoder_path)
+    print("[model] Loaded encoder from joblib cache")
+else:
+    from sentence_transformers import SentenceTransformer
+    with open(os.path.join(ARTIFACTS_DIR, "model_metadata.json")) as _f:
+        _meta = json.load(_f)
+    _model_id = _meta.get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
+    print(f"[model] embedding_model_ref.joblib not found — downloading {_model_id} from HuggingFace ...")
+    encoder = SentenceTransformer(_model_id)
+    print("[model] Encoder downloaded OK")
+
 clf_sif  = joblib.load(os.path.join(ARTIFACTS_DIR, "sif_classifier.joblib"))
 clf_rule = joblib.load(os.path.join(ARTIFACTS_DIR, "rule_classifier.joblib"))
 
