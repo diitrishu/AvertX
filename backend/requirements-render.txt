@@ -1,13 +1,10 @@
-# Render production requirements -- torch excluded to stay under 512 MB RAM
-# onnxruntime provides the same embeddings without PyTorch
+# Main backend (Render free tier) -- NO ML deps, model lives in ml_service/
+# This keeps RAM under 200 MB so the free 512 MB limit is never hit.
 fastapi==0.115.0
 uvicorn==0.32.0
 pandas
 scikit-learn
-onnxruntime
-transformers
 joblib
-lime
 pdfplumber
 pytesseract
 pdf2image

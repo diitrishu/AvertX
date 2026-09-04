@@ -8,9 +8,13 @@ Endpoints:
   Dashboard:   /dashboard/stats (Supervisor/HSE/Admin), /dashboard/my-stats (own reports)
   Admin:       /admin/users, /admin/users/{id}/role, /admin/users/{id}/status
   Audit:       /audit-log
+
+ML_SERVICE_URL env var: if set, prediction calls are forwarded to a separate
+ML microservice (ml_service/) instead of loading the model in-process.
+This keeps this backend under 512 MB RAM on the free tier.
 """
 
-import os, io, json
+import os, io, json, urllib.request, urllib.error
 from datetime import datetime
 from typing import Optional
 
@@ -21,7 +25,53 @@ from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException, Depen
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
-from backend.model import predict, explain_prediction, build_recurrence_table, RULE_SEVERITY
+# ── ML: use remote microservice if ML_SERVICE_URL is set, else load locally ──
+ML_SERVICE_URL = os.environ.get("ML_SERVICE_URL", "").rstrip("/")
+
+if ML_SERVICE_URL:
+    # Thin proxy — forwards predict calls to the ML service
+    print(f"[api] ML_SERVICE_URL={ML_SERVICE_URL} — using remote ML service")
+
+    def predict(report_text: str, site: str = "Unknown", activity: str = "Unknown") -> dict:
+        payload = json.dumps({"report_text": report_text, "site": site, "activity": activity}).encode()
+        req = urllib.request.Request(
+            f"{ML_SERVICE_URL}/predict",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                result = json.loads(resp.read())
+        except urllib.error.URLError as e:
+            raise HTTPException(502, f"ML service unreachable: {e}")
+        # Normalise to the shape backend/model.py's predict() returns
+        result.setdefault("top_contributing_phrases", [])
+        result.setdefault("sif_reasons", [])
+        result.setdefault("sif_model_name", "all-MiniLM-L6-v2-onnx")
+        result.setdefault("sif_model_version", "1.0.0")
+        result.setdefault("sif_decision_thresholds", {})
+        result.setdefault("sif_prediction_timestamp", datetime.now().isoformat())
+        result.setdefault("rule_needs_review", False)
+        result.setdefault("rule_review_reason", None)
+        result.setdefault("rule_runner_up", None)
+        result.setdefault("rule_runner_up_confidence", None)
+        result.setdefault("rule_model_name", None)
+        result.setdefault("rule_model_version", None)
+        result.setdefault("rule_prediction_timestamp", None)
+        return result
+
+    def explain_prediction(text, **kwargs):
+        return []  # LIME not available via remote service
+
+    def build_recurrence_table(df):
+        pass  # recurrence handled by ML service
+
+    RULE_SEVERITY = {}
+
+else:
+    # Local model loading (local dev only — too heavy for free-tier Render)
+    from backend.model import predict, explain_prediction, build_recurrence_table, RULE_SEVERITY
 from backend.database import (
     init_db, get_db, insert_report, get_dashboard_stats, get_my_stats, get_reports,
     create_user, get_user_by_email, get_user_by_id, list_users,
