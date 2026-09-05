@@ -951,7 +951,7 @@ function AnalyzeScreen() {
                     cursor: analyzing || !text.trim() ? "not-allowed" : "pointer",
                     border: "1px solid", borderColor: analyzing || !text.trim() ? "rgba(34,211,238,0.16)" : "#22D3EE",
                   }}>
-                  {analyzing ? "Analyzing..." : "Analyze Report"}
+                  {analyzing ? "Analyzing (waking model if cold)..." : "Analyze Report"}
                 </button>
               </div>
             </>
@@ -1796,6 +1796,13 @@ export default function App() {
       setCurrentUser(stored.user);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Warm up Render free-tier backend in the background as soon as the app loads.
+  // If the service is sleeping (Render 15-min inactivity spin-down), this initiates
+  // the ~45s cold start immediately so the backend is awake by the time the user acts.
+  useEffect(() => {
+    fetch(`${API}/health`).catch(() => {});
   }, []);
 
   // Listen for custom navigation events (e.g. from bulk upload, or a 401

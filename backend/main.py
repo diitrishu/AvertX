@@ -42,11 +42,19 @@ if ML_SERVICE_URL:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                result = json.loads(resp.read())
-        except urllib.error.URLError as e:
-            raise HTTPException(502, f"ML service unreachable: {e}")
+        # Render free-tier containers take 45-50s to cold-start when waking from sleep.
+        # Allow up to 75s with a retry to prevent 502/timeout failures.
+        last_err = None
+        for attempt in range(2):
+            try:
+                with urllib.request.urlopen(req, timeout=75) as resp:
+                    result = json.loads(resp.read())
+                    break
+            except Exception as e:
+                last_err = e
+                print(f"[api] ML service attempt {attempt + 1} waiting for cold-start: {e}")
+        else:
+            raise HTTPException(502, f"ML service unreachable after cold-start attempts: {last_err}")
         # Normalise to the shape backend/model.py's predict() returns
         result.setdefault("top_contributing_phrases", [])
         result.setdefault("sif_reasons", [])
@@ -131,7 +139,13 @@ def startup():
         build_recurrence_table(df)
     else:
         print("[api] oil_safety_reports_merged.csv not found — skipping recurrence table (Render deploy)")
-    print("[api] Startup complete.")
+
+    try:
+        from backend.keep_alive import start_keep_alive
+        start_keep_alive()
+    except Exception as e:
+        print(f"[api] Could not start keep_alive worker: {e}")
+
     print("[api] Startup complete.")
 
 # ═══════════════════════════════════════════════════════════════════

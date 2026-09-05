@@ -1,0 +1,47 @@
+name: Render Free Tier Keep-Alive
+
+# Pings your Render free tier services every 10 minutes to prevent them
+# from spinning down after 15 minutes of inactivity.
+# This completely eliminates the 50-second cold-start delay for users.
+
+on:
+  schedule:
+    # Run every 10 minutes (cron syntax: minute hour day month weekday)
+    # Render spins down after 15 minutes of inactivity, so 10 minutes keeps it continuously awake.
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    name: Keep-Alive Ping
+    steps:
+      - name: Ping Render Backend & ML Service
+        env:
+          BACKEND_URL: ${{ secrets.RENDER_BACKEND_URL || 'https://avertx.onrender.com' }}
+          ML_URL: ${{ secrets.RENDER_ML_URL || 'https://avertx-ml.onrender.com' }}
+        run: |
+          echo "=== Pinging Render Free Services to Prevent Inactivity Sleep ==="
+          echo "Timestamp: $(date -u)"
+          
+          echo "1. Pinging Backend: $BACKEND_URL/health"
+          BACKEND_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 65 "$BACKEND_URL/health" || echo "TIMEOUT/FAIL")
+          echo "   Backend Response: $BACKEND_STATUS"
+          
+          echo "2. Pinging ML Service: $ML_URL/health"
+          ML_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 65 "$ML_URL/health" || echo "TIMEOUT/FAIL")
+          echo "   ML Service Response: $ML_STATUS"
+          
+          if [ "$BACKEND_STATUS" = "200" ] || [ "$BACKEND_STATUS" = "301" ] || [ "$BACKEND_STATUS" = "302" ]; then
+            echo "   [OK] Backend is awake."
+          else
+            echo "   [NOTICE] Backend was sleeping or responded with $BACKEND_STATUS. Wake-up signal sent."
+          fi
+          
+          if [ "$ML_STATUS" = "200" ] || [ "$ML_STATUS" = "301" ] || [ "$ML_STATUS" = "302" ]; then
+            echo "   [OK] ML Service is awake."
+          else
+            echo "   [NOTICE] ML Service was sleeping or responded with $ML_STATUS. Wake-up signal sent."
+          fi
+          
+          echo "Keep-alive ping cycle completed."

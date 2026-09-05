@@ -1,0 +1,52 @@
+# render.yaml — Render Infrastructure as Code Blueprint for SIF-Guard
+# Deploy both services and the frontend with one click or automatic sync.
+
+services:
+  # ── 1. Backend Web Service ──────────────────────────────────────────────
+  - type: web
+    name: avertx
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r backend/requirements-render.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_DB_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ML_SERVICE_URL
+        fromService:
+          type: web
+          name: avertx-ml
+          property: host
+      - key: KEEP_ALIVE
+        value: "true"
+
+  # ── 2. ML Inference Microservice ────────────────────────────────────────
+  - type: web
+    name: avertx-ml
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r ml_service/requirements.txt
+    startCommand: uvicorn ml_service.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+
+  # ── 3. Frontend Static Site ────────────────────────────────────────────
+  - type: static
+    name: avertx-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: avertx
+          property: host
