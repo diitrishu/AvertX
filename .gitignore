@@ -63,3 +63,5 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+terminal_preview.html
