@@ -337,7 +337,8 @@ def get_report_by_pk(conn, report_pk_id):
 def get_reports(conn, site=None, activity=None, sif_potential=None,
                 life_saving_rule=None, reporter_id=None, critical_first=False,
                 page=1, per_page=25):
-    query = "select * from reports where 1=1"
+    # Exclude seed/training rows — only show real submitted reports.
+    query = "select * from reports where source not in ('real_ihm_stefanini', 'synthetic')"
     params: list = []
     if site:
         query += " and site=%s"; params.append(site)
@@ -379,53 +380,68 @@ def get_reports(conn, site=None, activity=None, sif_potential=None,
 def get_dashboard_stats(conn):
     cur = conn.cursor()
 
-    cur.execute("select count(*) from reports")
+    # Filter out seed/training rows — only count reports submitted through
+    # the real application. Seed rows have source = 'real_ihm_stefanini'
+    # or 'synthetic'; real submissions come from 'api', 'pdf_upload',
+    # 'bulk_upload', or any other source set by the application.
+    SEED_SOURCES = ('real_ihm_stefanini', 'synthetic')
+    seed_filter = "source NOT IN %s"
+    seed_param = (SEED_SOURCES,)
+
+    cur.execute(f"select count(*) from reports where {seed_filter}", seed_param)
     total = cur.fetchone()["count"]
 
-    cur.execute("select count(*) from reports where sif_potential='Yes'")
+    cur.execute(f"select count(*) from reports where sif_potential='Yes' and {seed_filter}", seed_param)
     sif_yes = cur.fetchone()["count"]
     sif_no = total - sif_yes
     density = round(100 * sif_yes / total, 1) if total > 0 else 0
 
     cur.execute(
-        "select count(*) from reports where critical=1 and status != 'Closed'"
+        f"select count(*) from reports where critical=1 and status != 'Closed' and {seed_filter}",
+        seed_param,
     )
     critical_open = cur.fetchone()["count"]
 
     cur.execute(
-        "select coalesce(nullif(status,''),'Submitted') as status, count(*) as cnt "
-        "from reports group by status"
+        f"select coalesce(nullif(status,''),'Submitted') as status, count(*) as cnt "
+        f"from reports where {seed_filter} group by status",
+        seed_param,
     )
     by_status = {r["status"]: r["cnt"] for r in cur.fetchall()}
 
     cur.execute(
-        "select life_saving_rule, count(*) as cnt from reports "
-        "where sif_potential='Yes' group by life_saving_rule order by cnt desc"
+        f"select life_saving_rule, count(*) as cnt from reports "
+        f"where sif_potential='Yes' and {seed_filter} group by life_saving_rule order by cnt desc",
+        seed_param,
     )
     rule_counts = cur.fetchall()
 
     cur.execute(
-        "select site, count(*) as total, "
-        "sum(case when sif_potential='Yes' then 1 else 0 end) as sif_count "
-        "from reports group by site order by sif_count desc"
+        f"select site, count(*) as total, "
+        f"sum(case when sif_potential='Yes' then 1 else 0 end) as sif_count "
+        f"from reports where {seed_filter} group by site order by sif_count desc",
+        seed_param,
     )
     site_rows = cur.fetchall()
 
     cur.execute(
-        "select activity, count(*) as total, "
-        "sum(case when sif_potential='Yes' then 1 else 0 end) as sif_count "
-        "from reports group by activity order by sif_count desc"
+        f"select activity, count(*) as total, "
+        f"sum(case when sif_potential='Yes' then 1 else 0 end) as sif_count "
+        f"from reports where {seed_filter} group by activity order by sif_count desc",
+        seed_param,
     )
     activity_rows = cur.fetchall()
 
     cur.execute(
-        "select site, activity, life_saving_rule, count(*) as cnt "
-        "from reports "
-        "where sif_potential='Yes' "
-        "  and life_saving_rule not in ('Unmapped','None','N/A','') "
-        "group by site, activity, life_saving_rule "
-        "having count(*) >= 2 "
-        "order by cnt desc limit 5"
+        f"select site, activity, life_saving_rule, count(*) as cnt "
+        f"from reports "
+        f"where sif_potential='Yes' "
+        f"  and life_saving_rule not in ('Unmapped','None','N/A','') "
+        f"  and {seed_filter} "
+        f"group by site, activity, life_saving_rule "
+        f"having count(*) >= 2 "
+        f"order by cnt desc limit 5",
+        seed_param,
     )
     precursors = cur.fetchall()
 

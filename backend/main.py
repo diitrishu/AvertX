@@ -478,15 +478,13 @@ def set_report_status(report_pk: int, body: dict, user: dict = Depends(require_r
 @app.get("/reports/filters")
 def report_filters(user: dict = Depends(get_current_user)):
     conn = get_db()
-    sites = [r[0] for r in conn.execute(
-        "SELECT DISTINCT site FROM reports WHERE site != '' ORDER BY site"
-    ).fetchall()]
-    activities = [r[0] for r in conn.execute(
-        "SELECT DISTINCT activity FROM reports WHERE activity != '' ORDER BY activity"
-    ).fetchall()]
-    rules = [r[0] for r in conn.execute(
-        "SELECT DISTINCT life_saving_rule FROM reports WHERE life_saving_rule != '' ORDER BY life_saving_rule"
-    ).fetchall()]
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT site FROM reports WHERE site != '' AND source NOT IN ('real_ihm_stefanini','synthetic') ORDER BY site")
+    sites = [r[0] for r in cur.fetchall()]
+    cur.execute("SELECT DISTINCT activity FROM reports WHERE activity != '' AND source NOT IN ('real_ihm_stefanini','synthetic') ORDER BY activity")
+    activities = [r[0] for r in cur.fetchall()]
+    cur.execute("SELECT DISTINCT life_saving_rule FROM reports WHERE life_saving_rule != '' AND source NOT IN ('real_ihm_stefanini','synthetic') ORDER BY life_saving_rule")
+    rules = [r[0] for r in cur.fetchall()]
     conn.close()
     return {"sites": sites, "activities": activities, "rules": rules}
 

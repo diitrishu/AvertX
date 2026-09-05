@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, PieChart, Pie,
@@ -1108,6 +1108,7 @@ function ReportsScreen() {
   const [filters, setFilters] = useState({ site: "", activity: "", sif_potential: "", life_saving_rule: "" });
   const [filterOpts, setFilterOpts] = useState<{ sites: string[]; activities: string[]; rules: string[] }>({ sites: [], activities: [], rules: [] });
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const loadFilters = useCallback(async () => {
     try {
@@ -1205,19 +1206,24 @@ function ReportsScreen() {
           <tbody>
             {reports.map((r, i) => {
               const isCritical = !!r.critical;
+              const isExpanded = expandedId === r.id;
               return (
+                <React.Fragment key={r.id}>
                 <tr key={r.id}
+                  onClick={() => setExpandedId(isExpanded ? null : r.id)}
                   style={{
                     background: isCritical ? "rgba(251,59,92,0.07)" : (i % 2 === 1 ? "#0C1015" : "transparent"),
                     borderTop: isCritical ? "1px solid rgba(251,59,92,0.3)" : "1px solid #161C24",
                     borderLeft: isCritical ? "2px solid #FB3B5C" : "2px solid transparent",
+                    cursor: "pointer",
                   }}>
                   <td className={`${TABLE_CELL} mono`} style={{ color: "#22D3EE", fontSize: 12 }}>
                     <div className="flex items-center gap-1.5">
                       {isCritical && (
                         <span title="Critical — immediate reviewer alert" className="pulse-glow" style={{ color: "#FB3B5C", fontSize: 13 }}>&#9888;</span>
                       )}
-                      {r.report_id}
+                      <span style={{ color: isExpanded ? "#F1F5F9" : "#22D3EE" }}>{r.report_id}</span>
+                      <span style={{ color: "#334155", fontSize: 10, marginLeft: 2 }}>{isExpanded ? "▲" : "▼"}</span>
                     </div>
                   </td>
                   <td className={`${TABLE_CELL} mono`} style={{ color: "#94A3B8", fontSize: 12 }}>{r.date}</td>
@@ -1234,7 +1240,7 @@ function ReportsScreen() {
                   <td className={TABLE_CELL}><Badge colors={riskColor(r.risk_level || "Low")}>{r.risk_level || "Low"}</Badge></td>
                   <td className={TABLE_CELL}><StatusBadge status={r.status} /></td>
                   {canReview && (
-                    <td className={TABLE_CELL}>
+                    <td className={TABLE_CELL} onClick={e => e.stopPropagation()}>
                       <select
                         value={r.status || "Submitted"}
                         disabled={updatingId === r.id}
@@ -1246,6 +1252,54 @@ function ReportsScreen() {
                     </td>
                   )}
                 </tr>
+                {isExpanded && (
+                  <tr key={`${r.id}-detail`} style={{ borderTop: "none" }}>
+                    <td colSpan={canReview ? 10 : 9} style={{ padding: 0 }}>
+                      <div className="px-6 py-5 flex flex-col gap-4"
+                        style={{ background: "rgba(34,211,238,0.04)", borderBottom: "1px solid rgba(34,211,238,0.16)", borderLeft: `3px solid ${sifColor(r.sif_potential).border}` }}>
+
+                        {/* Narrative text */}
+                        <div>
+                          <div className="text-[11px] font-semibold uppercase tracking-widest mb-2" style={{ color: "#64748B" }}>
+                            Report Narrative
+                          </div>
+                          <div className="text-sm leading-relaxed p-3 rounded-sm"
+                            style={{ background: "#07090C", border: "1px solid rgba(34,211,238,0.12)", color: "#CBD5E1", whiteSpace: "pre-wrap", fontFamily: "IBM Plex Sans, sans-serif" }}>
+                            {r.report_text || <span style={{ color: "#334155" }}>No narrative text recorded.</span>}
+                          </div>
+                        </div>
+
+                        {/* AI assessment row */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="rounded-sm px-3 py-2.5" style={{ background: "#07090C", border: "1px solid rgba(34,211,238,0.12)" }}>
+                            <div className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#64748B" }}>SIF Potential</div>
+                            <Badge colors={sifColor(r.sif_potential)}>{sifLabel(r.sif_potential)}</Badge>
+                            {r.confidence != null && (
+                              <div className="mono text-[11px] mt-1" style={{ color: sifColor(r.sif_potential).text }}>
+                                {(r.confidence * 100).toFixed(1)}% confidence
+                              </div>
+                            )}
+                          </div>
+                          <div className="rounded-sm px-3 py-2.5" style={{ background: "#07090C", border: "1px solid rgba(34,211,238,0.12)" }}>
+                            <div className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#64748B" }}>Life-Saving Rule</div>
+                            <div className="text-sm font-semibold" style={{ color: "#22D3EE" }}>{r.life_saving_rule || "N/A"}</div>
+                          </div>
+                          <div className="rounded-sm px-3 py-2.5" style={{ background: "#07090C", border: "1px solid rgba(34,211,238,0.12)" }}>
+                            <div className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#64748B" }}>Risk Score</div>
+                            <div className="mono font-bold" style={{ fontSize: 22, color: riskColor(r.risk_level || "Low").text }}>{r.risk_score ?? "—"}</div>
+                            <div className="text-[10px]" style={{ color: "#64748B" }}>{r.risk_level || "Low"}</div>
+                          </div>
+                          <div className="rounded-sm px-3 py-2.5" style={{ background: "#07090C", border: "1px solid rgba(34,211,238,0.12)" }}>
+                            <div className="text-[10px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#64748B" }}>Status</div>
+                            <StatusBadge status={r.status} />
+                            <div className="text-[10px] mt-1" style={{ color: "#64748B" }}>Submitted {r.date}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               );
             })}
           </tbody>
